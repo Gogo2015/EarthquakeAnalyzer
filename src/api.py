@@ -76,8 +76,7 @@ def get_jobinfo(job_id):
     except Exception as e:
         logger.error(f"Error getting job {job_id} info: {e}")
         return jsonify({"error" : str(e)})
-    
-# NEW ROUTE
+
 @app.route('/results/<job_id>', methods=['GET'])
 def get_job_results(job_id):
     try:
