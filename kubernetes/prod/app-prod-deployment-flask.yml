@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  labels:
+    app: flask-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+        - name: flask-app
+          imagePullPolicy: Always
+          image: qihangshi/earthquake_web_app:1.0
+          command: ['python3', 'earthquake_api.py']  
+          ports:
+          - name: http
+            containerPort: 5000
+          env:
+          - name: LOG_LEVEL
+            value: DEBUG

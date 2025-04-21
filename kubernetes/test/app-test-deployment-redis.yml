@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-redis-deployment
+  labels:
+    app: test-redis-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-redis-db
+  template:
+    metadata:
+      labels:
+        app: test-redis-db
+    spec:
+      containers:
+      - name: test-redis-db
+        image: redis:7
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: test-redis-data
+          mountPath: "/data"
+      volumes:
+      - name: test-redis-data
+        persistentVolumeClaim:
+          claimName: test-redis-data
