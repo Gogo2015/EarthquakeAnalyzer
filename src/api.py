@@ -103,11 +103,54 @@ def get_job_results(job_id):
 
 
 @app.route('/jobs', methods=['GET'])
-def get_jobs():
+def get_entire_job_list():
     """
         Gets all jobs in the redis database
     """
+<<<<<<< HEAD
     return jsonify(jobs_db.keys())
+=======
+    return jsonify(jdb.keys())
+
+
+@app.route('jobs', methods=['POST'])
+def create_jobs():
+
+    start = requests.args.get('start')
+    end = request.args.get('end')
+
+    if not start or not end:
+        return jsonify({"error":"Please include start date and end date and try again"})
+    job = add_job(start, end)
+
+    return jsonify(job) 
+
+
+
+
+@app.route('/jobs/<jobid>', methods=['GET'])
+def get_job(jobid):
+    """
+        Gets a specific job by unique uuid
+    """
+    return get_job_by_id(jobid)
+
+
+@app.route('/result/<jobid>', methods=['GET'])
+def get_result(jobid):
+"""
+return specific result of a job
+"""
+
+    try:
+        if get_job_by_id(jobid)['status'] != 'complete':
+            return jsonify({'message':'job is not finished yet'})
+        return json.loads(rdb.get(jobid))
+    except:
+        logging.error(f'job_id not found: {jobid}')
+        return jsonify({'message': 'job_id not found'})
+
+>>>>>>> 8a77ba3 (change)
 
 
 @app.route('/data', methods=['POST', 'GET', 'DELETE'])
