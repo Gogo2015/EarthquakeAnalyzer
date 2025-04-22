@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 import socket
 import os
+from matplotlib import pyplot as plt
 
 # Logging setup
 loglevel = os.environ.get('LOG_LEVEL', 'INFO').upper()
@@ -21,11 +22,32 @@ def bin_magnitude(mag):
     except:
         return "invalid"
 
+
+def create_chart(freq_dict):
+    """
+    Generate and save a bar chart of earthquake magnitude bins.
+    """
+    labels = sorted(freq_dict.keys())
+    counts = [freq_dict[label] for label in labels]
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(labels, counts, color='skyblue', edgecolor='black')
+    plt.xlabel('Magnitude Bin')
+    plt.ylabel('Number of Earthquakes')
+    plt.title('Earthquake Magnitude Distribution')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('magnitude_distribution.png')
+    plt.close()
+
+
+
 @q.worker
 def do_work(jobid):
     """
     Worker to compute frequency of earthquakes in magnitude bins for a given job.
     Assumes job contains filtering logic if needed (e.g., region/type).
+
     """
     logging.info(f"[Worker] Starting job: {jobid}")
     update_job_status(jobid, 'in progress')
@@ -45,7 +67,14 @@ def do_work(jobid):
         except Exception as e:
             logging.warning(f"Failed to process record {key}: {e}")
 
-    rdb.set(jobid, json.dumps(result))
+    rdb.hset(jobid,'result', json.dumps(result))
+
+    create_chart(result)
+    with open('magnitude_distribution.png','rb') as f:
+        img = f.read()
+    rdb.hset(jobid,'image', img)
+
+
     update_job_status(jobid, 'complete')
     logging.info(f"[Worker] Job {jobid} completed. Binned {sum(result.values())} earthquakes.")
 
