@@ -3,7 +3,7 @@ import requests
 import redis
 import json
 from jobs import add_job, get_job_by_id, add_hemisphere_job, rd, jdb
-import datetime
+from datetime import datetime
 import logging
 import os
 
@@ -30,6 +30,60 @@ def get_data():
     """
     response = requests.get(url='https://earthquake.usgs.gov/fdsnws/event/1/query.geojson?starttime=2025-03-12%2000:00:00&endtime=2025-04-11%2023:59:59&minmagnitude=2.5&orderby=time')
     return json.loads(response.content)['features']
+
+@app.route('/help', methods=['GET'])
+def help():
+    """
+    Displays information about API routes
+    """
+    routes = {
+        '/help': {
+            'methods': ['GET'],
+            'description': 'Returns information about all available API routes'
+        },
+        '/data': {
+            'methods': ['POST', 'GET', 'DELETE'],
+            'description': 'Load, retrieve, or delete the earthquake dataset'
+        },
+        '/jobs': {
+            'methods': ['POST', 'GET'],
+            'description': 'Create a new job or list all job IDs'
+        },
+        '/jobs/<job_id>': {
+            'methods': ['GET'],
+            'description': 'Get information about a specific job'
+        },
+        '/results/<job_id>': {
+            'methods': ['GET'],
+            'description': 'Get results of a completed job'
+        },
+        '/earthquake/all': {
+            'methods': ['GET'],
+            'description': 'Return a list of all earthquake IDs'
+        },
+        '/earthquake/<earthquake_id>': {
+            'methods': ['GET'],
+            'description': 'Return information about a specific earthquake'
+        },
+        '/earthquakes/by-place': {
+            'methods': ['GET'],
+            'description': 'Filter earthquakes by place (use ?place=query parameter)'
+        },
+        '/earthquakes/by-magnitude': {
+            'methods': ['GET'],
+            'description': 'Filter earthquakes by magnitude range (use ?min_mag=X&max_mag=Y parameters)'
+        },
+        '/earthquakes/by-date': {
+            'methods': ['GET'],
+            'description': 'Filter earthquakes by date range (use ?start=YYYY-MM-DD&end=YYYY-MM-DD parameters)'
+        },
+        '/hemisphere-job': {
+            'methods': ['POST'],
+            'description': 'Create a job to analyze earthquakes by hemisphere'
+        }
+    }
+    
+    return jsonify(routes)
 
 @app.route('/jobs', methods=['POST'])
 def create_job():
@@ -154,17 +208,20 @@ def handle_data():
 
 
 
-@app.route('/earthquake', methods=['GET'])
-def get_genes():
+@app.route('/earthquake/all', methods=['GET'])
+def get_earthquakes():
     """
-        Return a list of unique earthquake
+        Return a list of all earthquake IDs
     """
-    return jsonify(rd.keys())
+    earthquakes = []
+    for key in rd.keys():
+        earthquakes.append(key.decode('utf-8'))
+    return jsonify(earthquakes)
 
 @app.route('/earthquake/<earthquake_id>', methods=['GET'])
-def get_specific_gene(earthquake_id):
+def get_specific_earthquake(earthquake_id):
     """
-        Return gene information of a specific HGNC_ID
+        Return information about a specific earthquake ID
     """
     if rd.exists(earthquake_id):
         return json.loads(rd.get(earthquake_id))
@@ -172,8 +229,7 @@ def get_specific_gene(earthquake_id):
     return jsonify({'message': 'earthquake_id not found'})
 
 
-@app.route('earthquakes', methods=['GET'])
-
+@app.route('/earthquakes/by-place', methods=['GET'])
 def get_earthquake_by_place():
     """
         Filter the earthquake dataset by place
@@ -192,7 +248,7 @@ def get_earthquake_by_place():
     return jsonify(results)
 
 
-@app.route('/earthquake', methods=['GET'])
+@app.route('/earthquakes/by-magnitude', methods=['GET'])
 def get_earthquake_by_magnitude():
 
     """
@@ -213,7 +269,7 @@ def get_earthquake_by_magnitude():
     return jsonify(results)
 
 
-@app.route('/earthquake', methods=['GET'])
+@app.route('/earthquakes/by-date', methods=['GET'])
 def get_earthquake_by_date():
     """
     Filter the earthquake by date
@@ -226,7 +282,7 @@ def get_earthquake_by_date():
         end_ts = int(datetime.strptime(end_date_str, '%Y-%m-%d').timestamp() * 1000)
 
     except:
-        return jsonify({'error': 'Invalid date format'})
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'})
 
     results = []
 
