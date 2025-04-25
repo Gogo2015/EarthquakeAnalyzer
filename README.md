@@ -1,18 +1,25 @@
 # Earthquake Web App
 
+## Project Overview
+
+This project provides a Flask API to access and analyze earthquake data from the United States Geological Survey (USGS). It fetches recent earthquake data, stores it in Redis, and makes it available through a RESTful API. The application features a background job system that leverages Redis queues to process analysis jobs asynchronously, such as hemisphere distribution analysis and magnitude binning.
+
+The entire system is containerized using Docker and can be deployed with Kubernetes for scalability and high availability.
+
 ## Help
 To view all available routes and their descriptions, visit the `/help` endpoint.
-This project utilizes the Earthquake GeoJSON dataset provided by the United States Geological Survey (USGS) to create API endpoints using Flask. The API endpoints are designed to perform Create, Read, and Delete operations on the earthquake dataset, which is stored in a Redis database. These endpoints allow users to interact with seismic event data through flexible queries, including filters by location, magnitude, and date. 
 
-The application features a background jobs system that allows users to submit asynchronous job requests—such as computing statistical summaries based on magnitude bins or analyzing earthquake distribution by hemisphere—and later retrieve the results from the jobs database. The worker component processes these requests, generates visualizations, and stores them for retrieval. The application is containerized using Docker and deployable using Kubernetes, making it portable, scalable, and easy to run across different environments.
+## Database Architecture
 
-Must have [Docker](https://docs.docker.com/get-docker/) and [kubernetes](https://kubernetes.io/releases/download/) installed on your system.
+Our application uses Redis to efficiently store and manage data:
 
-## Earthquake Data Overview
-The United States Geological Survey (USGS) Earthquake Hazards Program provides access to real-time and historical earthquake data in GeoJSON format through their public API. The dataset includes detailed information about each seismic event, such as its unique ID, magnitude, geographic coordinates (longitude, latitude, depth), timestamp, location description, and status. Additional attributes include the event type, tsunami occurrence flag, magnitude type, and links to more detailed reports. This data can be filtered by time range, magnitude, and geographic bounds via the API. For this project, we will download the dataset using a specific API query and store the earthquake records in Redis for efficient access, filtering, and analysis.
+1. **Raw Data Database (DB 0)**: Stores the earthquake data with earthquake IDs as keys
+2. **Queue Database (DB 1)**: Manages the job queue for asynchronous task processing
+3. **Jobs Database (DB 2)**: Stores job information including status and parameters
+4. **Results Database (DB 3)**: Stores analysis results and generated visualizations
 
 ## File Descriptions
-~~~
+```
 Earthquake-Web-App/
     ├── Dockerfile
     ├── docker-compose.yml
@@ -46,7 +53,7 @@ Earthquake-Web-App/
         ├── api.py
         ├── jobs.py
         └── worker.py
-~~~
+```
 
 - [Dockerfile](Dockerfile) - Dockerfile to generate a docker image of our application
 - [docker-compose.yml](docker-compose.yml) - Docker-compose file to run the containerized Flask application
@@ -57,10 +64,14 @@ Earthquake-Web-App/
 - [test_api.py](./test/test_api.py) - Integration tests for the Flask application
 - [kubernetes/](./kubernetes/) - Configuration files for Kubernetes deployment in test and production environments
 
-## Software Diagram
-![image](diagram.svg)
+## System Architecture
 
-*Software diagram of the Flask Application. Visualization of the containerized application using Docker and how the Flask app interacts with worker and Redis container.*
+![System Architecture](diagram.svg)
+
+The application consists of three main services:
+- **Flask API Service**: Handles HTTP requests, provides data endpoints, manages job creation
+- **Redis Database**: Stores earthquake data, job queue, job status, and results (4 separate databases)
+- **Worker Service**: Processes jobs from the queue, analyzes earthquake data, generates visualizations, and stores results
 
 ## API Endpoints
 
@@ -81,6 +92,9 @@ Earthquake-Web-App/
 - `GET /results/<job_id>` - Get results of a completed job
 - `POST /hemisphere-job` - Create a new hemisphere analysis job
 
+## Earthquake Data Overview
+The United States Geological Survey (USGS) Earthquake Hazards Program provides access to real-time and historical earthquake data in GeoJSON format through their public API. The dataset includes detailed information about each seismic event, such as its unique ID, magnitude, geographic coordinates (longitude, latitude, depth), timestamp, location description, and status. Additional attributes include the event type, tsunami occurrence flag, magnitude type, and links to more detailed reports. This data can be filtered by time range, magnitude, and geographic bounds via the API. For this project, we download the dataset using a specific API query and store the earthquake records in Redis for efficient access, filtering, and analysis.
+
 ## Hemisphere Analysis
 
 The application includes a hemisphere analysis feature that categorizes earthquakes into four hemispheres based on their coordinates:
@@ -89,47 +103,7 @@ The application includes a hemisphere analysis feature that categorizes earthqua
 - Southeast (latitude < 0, longitude ≥ 0)
 - Southwest (latitude < 0, longitude < 0)
 
-### Creating a Hemisphere Analysis Job
-
-To create a hemisphere analysis job, send a POST request to `/hemisphere-job`:
-
-```
-POST /hemisphere-job
-Content-Type: application/json
-
-{
-  "min_magnitude": 3.0  // Optional, defaults to 0 if not provided
-}
-```
-
-The job will:
-1. Filter earthquakes by minimum magnitude (if specified)
-2. Count earthquakes in each hemisphere
-3. Calculate statistics for each hemisphere (avg magnitude, max magnitude)
-4. Generate a bar chart visualization
-5. Store the results in the results database
-
-### Retrieving Hemisphere Analysis Results
-
-Once the job is complete, you can retrieve the results using:
-
-```
-GET /results/<job_id>
-```
-
-The results will include:
-- Counts of earthquakes by hemisphere
-- Statistics for each hemisphere
-- A visualization of the distribution
-
-## Database Architecture
-
-Our application uses Redis to efficiently store and manage data:
-
-1. **Raw Data Database (DB 0)**: Stores the earthquake data with earthquake IDs as keys
-2. **Queue Database (DB 1)**: Manages the job queue for asynchronous task processing
-3. **Jobs Database (DB 2)**: Stores job information including status and parameters
-4. **Results Database (DB 3)**: Stores analysis results and generated visualizations
+The hemisphere analysis job filters earthquakes by a minimum magnitude (if specified), counts earthquakes in each hemisphere, calculates statistics for each hemisphere (avg magnitude, max magnitude), and generates a visualization showing the distribution.
 
 ## Testing
 
@@ -144,18 +118,14 @@ $ pytest
 ### Local Deployment with Docker
 
 #### Build the image
+Navigate to the directory where our Dockerfile, and [docker-compose.yml](docker-compose.yml) are located.
 
-**IMPORTANT**
-
-Before we run the application we must import the dataset. Navigate into the directory where our Dockerfile, and [docker-compose.yml](docker-compose.yml) are located.
-
-Now run:
 ```
 $ docker-compose build
 ```
 
 #### Run Flask Application Container
-Using the [docker-compose.yml](docker-compose.yml) file we can use it to start the Flask application container
+Using the [docker-compose.yml](docker-compose.yml) file we can use it to start the Flask application container:
 ```
 $ docker-compose up -d
 ```
@@ -163,7 +133,7 @@ $ docker-compose up -d
 
 Since we mapped to port 5000 in the [docker-compose.yml](docker-compose.yml) to interact with the Flask endpoints we can use `curl localhost:5000/...`
 
-To stop the container use
+To stop the container use:
 ```
 $ docker-compose down
 ```
@@ -191,7 +161,22 @@ The application will be available at the ingress URL defined in the Kubernetes c
 $ kubectl get ingress -n <namespace>
 ```
 
+## Logging Configuration
+
+The application uses Python's logging module. The log level can be configured via the `LOG_LEVEL` environment variable in the docker-compose.yaml file or Kubernetes configuration. Valid log levels are:
+
+- DEBUG
+- INFO (default)
+- WARNING
+- ERROR
+- CRITICAL
+
 ## Example Usage
+
+### Getting Help
+```
+$ curl localhost:5000/help
+```
 
 ### Loading Data
 ```
@@ -201,6 +186,26 @@ $ curl -X POST localhost:5000/data
 ### Viewing All Earthquakes
 ```
 $ curl localhost:5000/data
+```
+
+### Getting All Earthquake IDs
+```
+$ curl localhost:5000/earthquake/all
+```
+
+### Filtering Earthquakes by Place
+```
+$ curl localhost:5000/earthquakes/by-place?place=California
+```
+
+### Filtering Earthquakes by Magnitude
+```
+$ curl localhost:5000/earthquakes/by-magnitude?min_mag=3.0&max_mag=5.0
+```
+
+### Filtering Earthquakes by Date
+```
+$ curl localhost:5000/earthquakes/by-date?start=2025-03-15&end=2025-04-01
 ```
 
 ### Creating a Hemisphere Analysis Job
@@ -217,3 +222,7 @@ $ curl localhost:5000/jobs/<job_id>
 ```
 $ curl localhost:5000/results/<job_id>
 ```
+
+## Data Citation
+
+Earthquake data is provided by the United States Geological Survey (USGS) Earthquake Hazards Program. https://earthquake.usgs.gov/
