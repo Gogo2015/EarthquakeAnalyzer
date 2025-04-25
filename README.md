@@ -121,13 +121,13 @@ $ pytest
 Navigate to the directory where our Dockerfile, and [docker-compose.yml](docker-compose.yml) are located.
 
 ```
-$ docker-compose build
+$ docker compose build
 ```
 
 #### Run Flask Application Container
 Using the [docker-compose.yml](docker-compose.yml) file we can use it to start the Flask application container:
 ```
-$ docker-compose up -d
+$ docker compose up -d
 ```
 **Note:** -d starts the application in the background
 
@@ -135,7 +135,7 @@ Since we mapped to port 5000 in the [docker-compose.yml](docker-compose.yml) to 
 
 To stop the container use:
 ```
-$ docker-compose down
+$ docker compose down
 ```
 
 ### Kubernetes Deployment
