@@ -110,7 +110,7 @@ The hemisphere analysis job filters earthquakes by a minimum magnitude (if speci
 Test scripts are included in the `test` directory to verify the functionality of the API endpoints, job processing, and worker operations. To run tests:
 
 ```
-$ pytest
+pytest
 ```
 
 ## Deployment Instructions
@@ -121,13 +121,13 @@ $ pytest
 Navigate to the directory where our Dockerfile, and [docker-compose.yml](docker-compose.yml) are located.
 
 ```
-$ docker compose build
+docker compose build
 ```
 
 #### Run Flask Application Container
 Using the [docker-compose.yml](docker-compose.yml) file we can use it to start the Flask application container:
 ```
-$ docker compose up -d
+docker compose up -d
 ```
 **Note:** -d starts the application in the background
 
@@ -135,7 +135,7 @@ Since we mapped to port 5000 in the [docker-compose.yml](docker-compose.yml) to 
 
 To stop the container use:
 ```
-$ docker compose down
+docker compose down
 ```
 
 ### Kubernetes Deployment
@@ -144,21 +144,21 @@ $ docker compose down
 Deploy the application to the test environment:
 
 ```
-$ kubectl apply -f kubernetes/test/
+kubectl apply -f kubernetes/test/
 ```
 
 #### Production Environment
 Deploy the application to the production environment:
 
 ```
-$ kubectl apply -f kubernetes/prod/
+kubectl apply -f kubernetes/prod/
 ```
 
 #### Accessing the Application
 The application will be available at the ingress URL defined in the Kubernetes configuration. To check the URL:
 
 ```
-$ kubectl get ingress -n <namespace>
+kubectl get ingress -n <namespace>
 ```
 
 ## Logging Configuration
@@ -175,52 +175,52 @@ The application uses Python's logging module. The log level can be configured vi
 
 ### Getting Help
 ```
-$ curl localhost:5000/help
+curl localhost:5000/help
 ```
 
 ### Loading Data
 ```
-$ curl -X POST localhost:5000/data
+curl -X POST localhost:5000/data
 ```
 
 ### Viewing All Earthquakes
 ```
-$ curl localhost:5000/data
+curl localhost:5000/data
 ```
 
 ### Getting All Earthquake IDs
 ```
-$ curl localhost:5000/earthquake/all
+curl localhost:5000/earthquake/all
 ```
 
 ### Filtering Earthquakes by Place
 ```
-$ curl localhost:5000/earthquakes/by-place?place=California
+curl localhost:5000/earthquakes/by-place?place=California
 ```
 
 ### Filtering Earthquakes by Magnitude
 ```
-$ curl localhost:5000/earthquakes/by-magnitude?min_mag=3.0&max_mag=5.0
+curl localhost:5000/earthquakes/by-magnitude?min_mag=3.0&max_mag=5.0
 ```
 
 ### Filtering Earthquakes by Date
 ```
-$ curl localhost:5000/earthquakes/by-date?start=2025-03-15&end=2025-04-01
+curl localhost:5000/earthquakes/by-date?start=2025-03-15&end=2025-04-01
 ```
 
 ### Creating a Hemisphere Analysis Job
 ```
-$ curl -X POST localhost:5000/hemisphere-job -H "Content-Type: application/json" -d '{"min_magnitude": 3.0}'
+curl -X POST localhost:5000/hemisphere-job -H "Content-Type: application/json" -d '{"min_magnitude": 3.0}'
 ```
 
 ### Checking Job Status
 ```
-$ curl localhost:5000/jobs/<job_id>
+curl localhost:5000/jobs/<job_id>
 ```
 
 ### Retrieving Job Results
 ```
-$ curl localhost:5000/results/<job_id>
+curl localhost:5000/results/<job_id>
 ```
 
 ## Data Citation
