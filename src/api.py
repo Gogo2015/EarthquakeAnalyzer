@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import redis
 import json
-from jobs import add_job, get_job_by_id, rd, jdb
+from jobs import add_job, get_job_by_id, add_hemisphere_job, rd, jdb
 import datetime
 import logging
 import os
@@ -21,7 +21,7 @@ redis_port = 6379
 #Setup redis
 rd = redis.Redis(host = redis_ip, port=redis_port, db=0)
 jobs_db = redis.Redis(host=redis_ip, port=redis_port, db=2)
-results_db = redis.Redis(host=redis_ip, port=redis_port, db=3)
+rdb = redis.Redis(host=redis_ip, port=redis_port, db=3)
 
 
 def get_data():
@@ -84,7 +84,6 @@ def get_jobinfo(job_id):
 
     """
 
-
     try:
         job = get_job_by_id(job_id)
 
@@ -111,7 +110,7 @@ def get_job_results(job_id):
             return jsonify({"message" : f"Job {job_id} has not been completed yet", 
                            "status" : status})
 
-        results = results_db.get(job_id)
+        results = rdb.get(job_id)
         if not results:
             return jsonify({"message" : f"No results found for job {job_id}",
                             "status": status})
@@ -215,7 +214,6 @@ def get_earthquake_by_magnitude():
 
 
 @app.route('/earthquake', methods=['GET'])
-
 def get_earthquake_by_date():
     """
     Filter the earthquake by date
@@ -240,6 +238,29 @@ def get_earthquake_by_date():
             results.append(record)
 
     return jsonify(results)
+
+@app.route('/hemisphere-job', methods=['POST'])
+def create_hemisphere_job():
+    """
+    Route to create a job that analyzes earthquakes by hemisphere
+    
+    Methods:
+    POST: Send a hemisphere analysis job to redis database
+    """
+    try:
+        job_info = request.get_json()
+
+        # Optional parameter
+        min_magnitude = job_info.get('min_magnitude', 0) if job_info else 0
+        
+        # Create the job
+        job = add_hemisphere_job(min_magnitude=min_magnitude)
+
+        return jsonify({"id": job['id'], "status": job['status']})
+    
+    except Exception as e:
+        logger.error(f"Error creating hemisphere job: {e}")
+        return jsonify({"error": str(e)})
     
 
 

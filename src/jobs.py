@@ -4,11 +4,12 @@ import redis
 from hotqueue import HotQueue
 
 _redis_ip='redis-db'
-_redis_port='6379'
+_redis_port= '6379'
 
-rd = redis.Redis(host=_redis_ip, port=6379, db=0)
-q = HotQueue("queue", host=_redis_ip, port=6379, db=1)
-jdb = redis.Redis(host=_redis_ip, port=6379, db=2)
+rd = redis.Redis(host=_redis_ip, port=_redis_port, db=0)
+q = HotQueue("queue", host=_redis_ip, port=_redis_port, db=1)
+jdb = redis.Redis(host=_redis_ip, port=_redis_port, db=2)
+rdb = redis.Redis(host=_redis_ip, port=_redis_port, db=3)
 
 def _generate_jid():
     """
@@ -59,3 +60,22 @@ def update_job_status(jid, status):
         _save_job(jid, job_dict)
     else:
         raise Exception()
+    
+def _start_hemisphere_job(jid, status, min_magnitude=0):
+    """
+    Create a hemisphere analysis job object as a python dictionary.
+    """
+    return {
+        'id': jid,
+        'status': status,
+        'job_type': 'hemisphere',
+        'min_magnitude': min_magnitude
+    }
+
+def add_hemisphere_job(min_magnitude=0, status="submitted"):
+    """Add a hemisphere analysis job to the redis queue."""
+    jid = _generate_jid()
+    job_dict = _start_hemisphere_job(jid, status, min_magnitude)
+    _save_job(jid, job_dict)
+    _queue_job(jid)
+    return job_dict
