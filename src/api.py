@@ -274,8 +274,8 @@ def get_earthquake_by_date():
     """
     Filter the earthquake by date
     """
-    start_date_str = str(requests.args.get('start'))
-    end_date_str = str(requests.args.get('end'))
+    start_date_str = request.args.get('start')
+    end_date_str = request.args.get('end')
 
     try:
         start_ts = int(datetime.strptime(start_date_str, '%Y-%m-%d').timestamp() * 1000)
