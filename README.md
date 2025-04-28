@@ -200,12 +200,12 @@ curl localhost:5000/earthquakes/by-place?place=California
 
 ### Filtering Earthquakes by Magnitude
 ```
-curl localhost:5000/earthquakes/by-magnitude?min_mag=3.0&max_mag=5.0
+curl localhost:5000/earthquakes/by-magnitude?min_mag=3.0\&max_mag=5.0
 ```
 
 ### Filtering Earthquakes by Date
 ```
-curl localhost:5000/earthquakes/by-date?start=2025-03-15&end=2025-04-01
+curl localhost:5000/earthquakes/by-date?start=2025-03-15\&end=2025-04-01
 ```
 
 ### Creating a Hemisphere Analysis Job
