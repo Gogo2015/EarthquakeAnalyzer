@@ -66,7 +66,7 @@ Earthquake-Web-App/
 
 ## System Architecture
 
-![System Architecture](diagram.svg)
+![System Architecture](diagram.png)
 
 The application consists of three main services:
 - **Flask API Service**: Handles HTTP requests, provides data endpoints, manages job creation
