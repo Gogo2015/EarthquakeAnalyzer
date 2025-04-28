@@ -257,14 +257,14 @@ def get_earthquake_by_magnitude():
     min_magnitude = request.args.get('min_mag',type=float)
     max_magnitude = request.args.get('max_mag',type=float)
 
-    results =[]
+    results = []
 
     for key in rd.keys():
         record = json.loads(rd.get(key))
         magnitude = record.get('properties').get('mag')
         if isinstance (magnitude, (int, float )): # check the magnitude type 
             if (min_magnitude is None or magnitude >= min_magnitude) and (max_magnitude is None or magnitude <= max_magnitude):
-                return results.append(record)
+                results.append(record)
 
     return jsonify(results)
 
