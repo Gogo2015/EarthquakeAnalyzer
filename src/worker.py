@@ -199,7 +199,6 @@ def do_work(jobid):
 
 
 if __name__ == "__main__":
-    # Print a message to show the worker is starting
-    logging.info("Starting worker loop. Waiting for jobs...")
     # Start the worker
-    q.worker(do_work)
+    logging.info("Starting worker...")
+    q.run()
