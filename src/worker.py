@@ -149,8 +149,8 @@ def do_hemisphere_work(jobid, job):
     plt.close()
     
     # Store results in Redis
-    rdb.set(jobid, json.dumps(result))
-    
+    rdb.hset(jobid, 'result', json.dumps(result))
+        
     # Save and store the chart
     with open('hemisphere_distribution.png', 'rb') as f:
         img = f.read()
