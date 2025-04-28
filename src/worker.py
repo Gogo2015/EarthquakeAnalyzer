@@ -201,4 +201,4 @@ def do_work(jobid):
 if __name__ == "__main__":
     # Start the worker
     logging.info("Starting worker...")
-    q.run()
+    do_work()
