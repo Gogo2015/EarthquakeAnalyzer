@@ -197,3 +197,9 @@ def do_work(jobid):
         update_job_status(jobid, 'complete')
         logging.info(f"[Worker] Job {jobid} completed. Binned {sum(result.values())} earthquakes.")
 
+
+if __name__ == "__main__":
+    # Print a message to show the worker is starting
+    logging.info("Starting worker loop. Waiting for jobs...")
+    # Start the worker
+    q.worker(do_work)
