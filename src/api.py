@@ -277,21 +277,31 @@ def get_earthquake_by_date():
     start_date_str = request.args.get('start')
     end_date_str = request.args.get('end')
 
+    # Validate that both parameters are provided
+    if not start_date_str or not end_date_str:
+        return jsonify({'error': 'Both start and end dates are required'})
+
     try:
+        # Convert dates to timestamps (milliseconds)
         start_ts = int(datetime.strptime(start_date_str, '%Y-%m-%d').timestamp() * 1000)
         end_ts = int(datetime.strptime(end_date_str, '%Y-%m-%d').timestamp() * 1000)
-
-    except:
-        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'})
+    except ValueError as e:
+        return jsonify({'error': f'Invalid date format. Use YYYY-MM-DD. Details: {str(e)}'})
+    except Exception as e:
+        return jsonify({'error': f'Error processing dates: {str(e)}'})
 
     results = []
 
-    for key in rd.keys():
-        record = json.loads(rd.get(key))
-        time = record.get('properties').get('time')
-
-        if start_ts <= time <= end_ts:
-            results.append(record)
+    try:
+        for key in rd.keys():
+            record = json.loads(rd.get(key))
+            time = record.get('properties', {}).get('time')
+            
+            # Make sure time is a valid value
+            if isinstance(time, (int, float)) and start_ts <= time <= end_ts:
+                results.append(record)
+    except Exception as e:
+        return jsonify({'error': f'Error processing earthquake data: {str(e)}'})
 
     return jsonify(results)
 
