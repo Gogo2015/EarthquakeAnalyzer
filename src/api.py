@@ -164,7 +164,7 @@ def get_job_results(job_id):
             return jsonify({"message" : f"Job {job_id} has not been completed yet", 
                            "status" : status})
 
-        results = rdb.hget(job_id)
+        results = rdb.hget(job_id, 'result')
         if not results:
             return jsonify({"message" : f"No results found for job {job_id}",
                             "status": status})
