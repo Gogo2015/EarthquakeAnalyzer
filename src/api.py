@@ -330,7 +330,7 @@ def create_hemisphere_job():
     
 @app.route('/download/<jobid>', methods=['GET'])
 def download(jobid):
-    path = f'/app/{jobid}.png'
+    path = f'/app/jobresult{jobid[:3]}.png'
     with open(path, 'wb') as f:
         f.write(rdb.hget(jobid, 'image'))   # 'results' is a client to the results db
     return send_file(path, mimetype='image/png', as_attachment=True)
