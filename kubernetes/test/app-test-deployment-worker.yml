@@ -17,8 +17,8 @@ spec:
       containers:
         - name: test-worker
           imagePullPolicy: Always
-          image: hieucanguyen/bike_share_web_app:1.0
-          command: ["python3", "worker.py"]
+          image: username/api:1.0
+          command: ["python3", "test_worker.py"]
           env:
            - name: LOG_LEVEL
              value: DEBUG

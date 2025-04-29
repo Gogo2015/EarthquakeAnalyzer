@@ -18,7 +18,7 @@ spec:
       containers:
         - name: flask-app
           imagePullPolicy: Always
-          image: qihangshi/earthquake_web_app:1.0
+          image: username/api:1.0
           command: ['python3', 'earthquake_api.py']  
           ports:
           - name: http
