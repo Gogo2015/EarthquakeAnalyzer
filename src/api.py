@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import requests
 import redis
 import json
@@ -328,9 +328,13 @@ def create_hemisphere_job():
         logger.error(f"Error creating hemisphere job: {e}")
         return jsonify({"error": str(e)})
     
-
-
-
+@app.route('/download/<jobid>', methods=['GET'])
+def download(jobid):
+    path = f'/app/{jobid}.png'
+    with open(path, 'wb') as f:
+        f.write(rdb.hget(jobid, 'image'))   # 'results' is a client to the results db
+    return send_file(path, mimetype='image/png', as_attachment=True)
+    
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
 

@@ -228,6 +228,11 @@ curl localhost:5000/jobs/<job_id>
 curl localhost:5000/results/<job_id>
 ```
 
+### Downloading Job Result Image
+```
+curl -O localhost:5000/download/<job_id>
+```
+
 ## Data Citation
 
 Earthquake data is provided by the United States Geological Survey (USGS) Earthquake Hazards Program. https://earthquake.usgs.gov/
