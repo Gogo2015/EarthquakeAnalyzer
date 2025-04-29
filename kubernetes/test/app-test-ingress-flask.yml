@@ -9,7 +9,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "username.coe332.tacc.cloud"
+  - host: "qihangshi2475.coe332.tacc.cloud"
     http:
         paths:
         - pathType: Prefix
