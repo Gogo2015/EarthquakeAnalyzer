@@ -145,14 +145,14 @@ def do_hemisphere_work(jobid, job):
     plt.ylabel('Number of Earthquakes')
     plt.title('Earthquake Distribution by Hemisphere')
     plt.tight_layout()
-    plt.savefig('hemisphere_distribution.png')
+    plt.savefig('/hemisphere_distribution.png')
     plt.close()
     
     # Store results in Redis
     rdb.hset(jobid, 'result', json.dumps(result))
         
     # Save and store the chart
-    with open('hemisphere_distribution.png', 'rb') as f:
+    with open('/hemisphere_distribution.png', 'rb') as f:
         img = f.read()
     rdb.hset(jobid, 'image', img)
     
