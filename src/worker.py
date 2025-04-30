@@ -11,7 +11,9 @@ loglevel = os.environ.get('LOG_LEVEL', 'INFO').upper()
 format_str = f'[%(asctime)s {socket.gethostname()}] %(filename)s:%(funcName)s:%(lineno)s - %(levelname)s: %(message)s'
 logging.basicConfig(level=loglevel, format=format_str)
 
-#Results db
+# Define a consistent directory for saving images
+IMAGE_DIR = '/app'
+os.makedirs(IMAGE_DIR, exist_ok=True)  # Make sure the directory exists
 
 def bin_magnitude(mag):
     """Convert a magnitude float into a labeled bin (e.g., '3.0–3.9')"""
@@ -25,7 +27,7 @@ def bin_magnitude(mag):
         return "invalid"
 
 
-def create_chart(freq_dict):
+def create_chart(freq_dict, job_id):
     """
     Generate and save a bar chart of earthquake magnitude bins.
     """
@@ -39,8 +41,13 @@ def create_chart(freq_dict):
     plt.title('Earthquake Magnitude Distribution')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('magnitude_distribution.png')
+    
+    # Save with consistent path pattern
+    output_path = os.path.join(IMAGE_DIR, f'jobresult{job_id}.png')
+    plt.savefig(output_path)
     plt.close()
+    
+    return output_path
 
 def determine_hemisphere(lat, lon):
     """
@@ -145,16 +152,23 @@ def do_hemisphere_work(jobid, job):
     plt.ylabel('Number of Earthquakes')
     plt.title('Earthquake Distribution by Hemisphere')
     plt.tight_layout()
-    plt.savefig('/hemisphere_distribution.png')
+    
+    # Save with consistent path pattern
+    output_path = os.path.join(IMAGE_DIR, f'jobresult{jobid}.png')
+    plt.savefig(output_path)
     plt.close()
     
     # Store results in Redis
     rdb.hset(jobid, 'result', json.dumps(result))
         
     # Save and store the chart
-    with open('/hemisphere_distribution.png', 'rb') as f:
-        img = f.read()
-    rdb.hset(jobid, 'image', img)
+    try:
+        with open(output_path, 'rb') as f:
+            img = f.read()
+        rdb.hset(jobid, 'image', img)
+        logging.info(f"[Worker] Successfully saved image for job {jobid}")
+    except Exception as e:
+        logging.error(f"[Worker] Failed to save image for job {jobid}: {e}")
     
     update_job_status(jobid, 'complete')
     logging.info(f"[Worker] Hemisphere job {jobid} completed. Analyzed {total_processed} earthquakes.")
@@ -164,41 +178,56 @@ def do_work(jobid):
     """
     Worker to compute frequency of earthquakes in magnitude bins for a given job.
     Assumes job contains filtering logic if needed (e.g., region/type).
-
     """
     logging.info(f"[Worker] Starting job: {jobid}")
     update_job_status(jobid, 'in progress')
 
     job = get_job_by_id(jobid)
+    
+    if not job:
+        logging.error(f"[Worker] Job {jobid} not found")
+        return
 
     job_type = job.get('job_type', 'magnitude')
 
-    if job_type == 'hemisphere':
-        do_hemisphere_work(jobid, job)
-    else:    
-        result = {}
-        for key in rd.keys():
+    try:
+        if job_type == 'hemisphere':
+            do_hemisphere_work(jobid, job)
+        else:    
+            result = {}
+            for key in rd.keys():
+                try:
+                    quake = json.loads(rd.get(key))
+                    mag = quake.get("properties", {}).get("mag")
+                    bin_label = bin_magnitude(mag)
+                    result[bin_label] = result.get(bin_label, 0) + 1
+                except Exception as e:
+                    logging.warning(f"Failed to process record {key}: {e}")
+
+            rdb.hset(jobid, 'result', json.dumps(result))
+
+            # Create chart and get the output path
+            output_path = create_chart(result, jobid)
+            
+            # Read and store the chart image
             try:
-                quake = json.loads(rd.get(key))
-                mag = quake.get("properties", {}).get("mag")
-                bin_label = bin_magnitude(mag)
-                result[bin_label] = result.get(bin_label, 0) + 1
+                with open(output_path, 'rb') as f:
+                    img = f.read()
+                rdb.hset(jobid, 'image', img)
+                logging.info(f"[Worker] Successfully saved image for job {jobid}")
             except Exception as e:
-                logging.warning(f"Failed to process record {key}: {e}")
+                logging.error(f"[Worker] Failed to save image for job {jobid}: {e}")
 
-        rdb.hset(jobid,'result', json.dumps(result))
-
-        create_chart(result)
-        with open('magnitude_distribution.png','rb') as f:
-            img = f.read()
-        rdb.hset(jobid,'image', img)
-
-
-        update_job_status(jobid, 'complete')
-        logging.info(f"[Worker] Job {jobid} completed. Binned {sum(result.values())} earthquakes.")
-
+            update_job_status(jobid, 'complete')
+            logging.info(f"[Worker] Job {jobid} completed. Binned {sum(result.values())} earthquakes.")
+    except Exception as e:
+        logging.error(f"[Worker] Error processing job {jobid}: {e}")
+        update_job_status(jobid, 'error')
 
 if __name__ == "__main__":
     # Start the worker
     logging.info("Starting worker...")
-    do_work()
+    try:
+        do_work()
+    except Exception as e:
+        logging.error(f"Worker error: {e}")
