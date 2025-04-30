@@ -18,7 +18,7 @@ spec:
       containers:
         - name: test-flask-app
           imagePullPolicy: Always
-          image: username/api:1.0
+          image: mitragaurav10/api:1.0
           command: ['python3', 'test_api.py']  
           ports:
           - name: http

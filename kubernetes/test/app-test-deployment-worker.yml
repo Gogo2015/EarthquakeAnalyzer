@@ -17,7 +17,7 @@ spec:
       containers:
         - name: test-worker
           imagePullPolicy: Always
-          image: qihangshi2475/api:1.0
+          image: mitragaurav10/api:1.0
           command: ["python3", "test_worker.py"]
           env:
            - name: LOG_LEVEL

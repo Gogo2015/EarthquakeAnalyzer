@@ -15,7 +15,7 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - redis-db
-    image: username/api:1.0
+    image: mitragaurav10/api:1.0
     ports:
       - 5000:5000
     environment:
@@ -27,7 +27,7 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - redis-db
-    image: username/api:1.0
+    image: mitragaurav10/api:1.0
     environment:
       - REDIS_IP=redis-db
     command: ["worker.py"]
