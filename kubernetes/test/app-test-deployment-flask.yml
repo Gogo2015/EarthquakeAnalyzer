@@ -19,7 +19,7 @@ spec:
         - name: test-flask-app
           imagePullPolicy: Always
           image: mitragaurav10/api:1.0
-          command: ['python3', 'test_api.py']  
+          command: ['python3', '/path/to/test/test_api.py']  
           ports:
           - name: http
             containerPort: 5000
