@@ -19,7 +19,7 @@ spec:
         - name: flask-app
           imagePullPolicy: Always
           image: mitragaurav10/api:1.0
-          command: ['python3', 'earthquake_api.py']  
+          command: ['python3', 'api.py']  
           ports:
           - name: http
             containerPort: 5000
