@@ -5,7 +5,7 @@ metadata:
   name: redis-data
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   storageClassName: cinder-csi
   resources:
     requests:
