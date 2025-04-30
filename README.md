@@ -202,6 +202,11 @@ curl -X POST localhost:5000/data
 curl localhost:5000/data
 ```
 
+### Deleting All Data
+```
+curl -X DELETE localhost:5000/data
+```
+
 ### Getting All Earthquake IDs
 ```
 curl localhost:5000/earthquake/all
