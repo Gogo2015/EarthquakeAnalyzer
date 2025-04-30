@@ -12,9 +12,9 @@ RUN pip3 install -r requirements.txt
 COPY src/api.py src/jobs.py src/worker.py ./
 
 # Copy test files
-COPY test/test_api.py test/test_worker.py ./test/
+COPY test/test_api.py test/test_jobs.py test/test_worker.py ./
 
-RUN chmod +rx api.py jobs.py worker.py test/test_api.py test/test_worker.py
+RUN chmod +rx api.py jobs.py worker.py test_api.py test_worker.py test_jobs.py
 
 ENV PATH="/code:$PATH"
 
