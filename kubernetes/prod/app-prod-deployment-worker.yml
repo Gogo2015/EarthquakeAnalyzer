@@ -22,3 +22,5 @@ spec:
           env:
            - name: LOG_LEVEL
              value: DEBUG
+           - name: REDIS_IP
+             value: redis-db-service
