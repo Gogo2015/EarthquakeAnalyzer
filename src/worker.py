@@ -4,6 +4,9 @@ import logging
 from datetime import datetime
 import socket
 import os
+import matplotlib
+# Set non-interactive backend to avoid display issues in container environments
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 # Logging setup
@@ -31,23 +34,30 @@ def create_chart(freq_dict, job_id):
     """
     Generate and save a bar chart of earthquake magnitude bins.
     """
-    labels = sorted(freq_dict.keys())
-    counts = [freq_dict[label] for label in labels]
+    try:
+        # Clear any existing figures to prevent memory issues
+        plt.close('all')
+        
+        labels = sorted(freq_dict.keys())
+        counts = [freq_dict[label] for label in labels]
 
-    plt.figure(figsize=(10, 6))
-    plt.bar(labels, counts, color='skyblue', edgecolor='black')
-    plt.xlabel('Magnitude Bin')
-    plt.ylabel('Number of Earthquakes')
-    plt.title('Earthquake Magnitude Distribution')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    
-    # Save with consistent path pattern
-    output_path = os.path.join(IMAGE_DIR, f'jobresult{job_id}.png')
-    plt.savefig(output_path)
-    plt.close()
-    
-    return output_path
+        plt.figure(figsize=(10, 6))
+        plt.bar(labels, counts, color='skyblue', edgecolor='black')
+        plt.xlabel('Magnitude Bin')
+        plt.ylabel('Number of Earthquakes')
+        plt.title('Earthquake Magnitude Distribution')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        
+        # Save with consistent path pattern - simplified approach
+        temp_path = f'/app/temp_{job_id}.png'
+        plt.savefig(temp_path)
+        plt.close()
+        
+        return temp_path
+    except Exception as e:
+        logging.error(f"Error creating chart: {str(e)}")
+        raise
 
 def determine_hemisphere(lat, lon):
     """
@@ -66,112 +76,116 @@ def do_hemisphere_work(jobid, job):
     """
     Process a hemisphere analysis job
     """
-    # Extract job parameters
-    min_magnitude = job.get('min_magnitude', 0)
-    
-    # Dictionary to track earthquake counts by hemisphere
-    hemisphere_counts = {
-        "Northeast": 0,
-        "Northwest": 0,
-        "Southeast": 0,
-        "Southwest": 0
-    }
-    
-    # Dictionary to track magnitude statistics by hemisphere
-    hemisphere_stats = {
-        "Northeast": {"sum": 0, "max": 0, "count": 0},
-        "Northwest": {"sum": 0, "max": 0, "count": 0},
-        "Southeast": {"sum": 0, "max": 0, "count": 0},
-        "Southwest": {"sum": 0, "max": 0, "count": 0}
-    }
-    
-    # Process all earthquakes in Redis
-    total_processed = 0
-    for key in rd.keys():
-        try:
-            quake = json.loads(rd.get(key))
-            properties = quake.get('properties', {})
-            geometry = quake.get('geometry', {})
-            
-            # Apply magnitude filter
-            mag = properties.get('mag')
-            if mag is None or mag < min_magnitude:
-                continue
-                
-            # Get earthquake coordinates
-            coordinates = geometry.get('coordinates')
-            if not coordinates or len(coordinates) < 2:
-                continue
-                
-            lon = coordinates[0]
-            lat = coordinates[1]
-            
-            # Determine hemisphere
-            hemisphere = determine_hemisphere(lat, lon)
-            
-            # Update counts
-            hemisphere_counts[hemisphere] += 1
-            
-            # Update statistics
-            hemisphere_stats[hemisphere]["sum"] += mag
-            hemisphere_stats[hemisphere]["count"] += 1
-            if mag > hemisphere_stats[hemisphere]["max"]:
-                hemisphere_stats[hemisphere]["max"] = mag
-            
-            total_processed += 1
-            
-        except Exception as e:
-            logging.warning(f"Failed to process record {key}: {e}")
-    
-    # Calculate average magnitudes
-    for hemisphere in hemisphere_stats:
-        if hemisphere_stats[hemisphere]["count"] > 0:
-            hemisphere_stats[hemisphere]["avg"] = hemisphere_stats[hemisphere]["sum"] / hemisphere_stats[hemisphere]["count"]
-        else:
-            hemisphere_stats[hemisphere]["avg"] = 0
-        
-        # Clean up the dictionary
-        del hemisphere_stats[hemisphere]["sum"]
-    
-    # Prepare result
-    result = {
-        "counts_by_hemisphere": hemisphere_counts,
-        "stats_by_hemisphere": hemisphere_stats,
-        "total_processed": total_processed
-    }
-    
-    # Create visualization
-    plt.figure(figsize=(10, 6))
-    
-    hemispheres = list(hemisphere_counts.keys())
-    counts = list(hemisphere_counts.values())
-    
-    plt.bar(hemispheres, counts, color=['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3'])
-    
-    plt.xlabel('Hemisphere')
-    plt.ylabel('Number of Earthquakes')
-    plt.title('Earthquake Distribution by Hemisphere')
-    plt.tight_layout()
-    
-    # Save with consistent path pattern
-    output_path = os.path.join(IMAGE_DIR, f'jobresult{jobid}.png')
-    plt.savefig(output_path)
-    plt.close()
-    
-    # Store results in Redis
-    rdb.hset(jobid, 'result', json.dumps(result))
-        
-    # Save and store the chart
     try:
-        with open(output_path, 'rb') as f:
+        # Extract job parameters
+        min_magnitude = job.get('min_magnitude', 0)
+        
+        # Dictionary to track earthquake counts by hemisphere
+        hemisphere_counts = {
+            "Northeast": 0,
+            "Northwest": 0,
+            "Southeast": 0,
+            "Southwest": 0
+        }
+        
+        # Dictionary to track magnitude statistics by hemisphere
+        hemisphere_stats = {
+            "Northeast": {"sum": 0, "max": 0, "count": 0},
+            "Northwest": {"sum": 0, "max": 0, "count": 0},
+            "Southeast": {"sum": 0, "max": 0, "count": 0},
+            "Southwest": {"sum": 0, "max": 0, "count": 0}
+        }
+        
+        # Process all earthquakes in Redis
+        total_processed = 0
+        for key in rd.keys():
+            try:
+                quake = json.loads(rd.get(key))
+                properties = quake.get('properties', {})
+                geometry = quake.get('geometry', {})
+                
+                # Apply magnitude filter
+                mag = properties.get('mag')
+                if mag is None or mag < min_magnitude:
+                    continue
+                    
+                # Get earthquake coordinates
+                coordinates = geometry.get('coordinates')
+                if not coordinates or len(coordinates) < 2:
+                    continue
+                    
+                lon = coordinates[0]
+                lat = coordinates[1]
+                
+                # Determine hemisphere
+                hemisphere = determine_hemisphere(lat, lon)
+                
+                # Update counts
+                hemisphere_counts[hemisphere] += 1
+                
+                # Update statistics
+                hemisphere_stats[hemisphere]["sum"] += mag
+                hemisphere_stats[hemisphere]["count"] += 1
+                if mag > hemisphere_stats[hemisphere]["max"]:
+                    hemisphere_stats[hemisphere]["max"] = mag
+                
+                total_processed += 1
+                
+            except Exception as e:
+                logging.warning(f"Failed to process record {key}: {e}")
+        
+        # Calculate average magnitudes
+        for hemisphere in hemisphere_stats:
+            if hemisphere_stats[hemisphere]["count"] > 0:
+                hemisphere_stats[hemisphere]["avg"] = hemisphere_stats[hemisphere]["sum"] / hemisphere_stats[hemisphere]["count"]
+            else:
+                hemisphere_stats[hemisphere]["avg"] = 0
+            
+            # Clean up the dictionary
+            del hemisphere_stats[hemisphere]["sum"]
+        
+        # Prepare result
+        result = {
+            "counts_by_hemisphere": hemisphere_counts,
+            "stats_by_hemisphere": hemisphere_stats,
+            "total_processed": total_processed
+        }
+        
+        # Store results in Redis
+        rdb.hset(jobid, 'result', json.dumps(result))
+        
+        # Clear any existing figures
+        plt.close('all')
+        
+        # Create visualization
+        plt.figure(figsize=(10, 6))
+        
+        hemispheres = list(hemisphere_counts.keys())
+        counts = list(hemisphere_counts.values())
+        
+        plt.bar(hemispheres, counts, color=['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3'])
+        
+        plt.xlabel('Hemisphere')
+        plt.ylabel('Number of Earthquakes')
+        plt.title('Earthquake Distribution by Hemisphere')
+        plt.tight_layout()
+        
+        # Save with simplified approach
+        temp_path = f'/app/temp_{jobid}.png'
+        plt.savefig(temp_path)
+        plt.close()
+        
+        # Save and store the chart
+        with open(temp_path, 'rb') as f:
             img = f.read()
         rdb.hset(jobid, 'image', img)
         logging.info(f"[Worker] Successfully saved image for job {jobid}")
+        
+        update_job_status(jobid, 'complete')
+        logging.info(f"[Worker] Hemisphere job {jobid} completed. Analyzed {total_processed} earthquakes.")
     except Exception as e:
-        logging.error(f"[Worker] Failed to save image for job {jobid}: {e}")
-    
-    update_job_status(jobid, 'complete')
-    logging.info(f"[Worker] Hemisphere job {jobid} completed. Analyzed {total_processed} earthquakes.")
+        logging.error(f"[Worker] Error in hemisphere job {jobid}: {str(e)}")
+        update_job_status(jobid, 'error')
 
 @q.worker
 def do_work(jobid):
@@ -206,20 +220,21 @@ def do_work(jobid):
 
             rdb.hset(jobid, 'result', json.dumps(result))
 
-            # Create chart and get the output path
-            output_path = create_chart(result, jobid)
-            
-            # Read and store the chart image
             try:
-                with open(output_path, 'rb') as f:
+                # Create chart and get the output path
+                temp_path = create_chart(result, jobid)
+                
+                # Read and store the chart image - simplified approach
+                with open(temp_path, 'rb') as f:
                     img = f.read()
                 rdb.hset(jobid, 'image', img)
                 logging.info(f"[Worker] Successfully saved image for job {jobid}")
+                
+                update_job_status(jobid, 'complete')
+                logging.info(f"[Worker] Job {jobid} completed. Binned {sum(result.values())} earthquakes.")
             except Exception as e:
-                logging.error(f"[Worker] Failed to save image for job {jobid}: {e}")
-
-            update_job_status(jobid, 'complete')
-            logging.info(f"[Worker] Job {jobid} completed. Binned {sum(result.values())} earthquakes.")
+                logging.error(f"[Worker] Error with image for job {jobid}: {str(e)}")
+                update_job_status(jobid, 'error')
     except Exception as e:
         logging.error(f"[Worker] Error processing job {jobid}: {e}")
         update_job_status(jobid, 'error')
