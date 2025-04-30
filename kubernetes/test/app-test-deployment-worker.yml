@@ -18,7 +18,7 @@ spec:
         - name: test-worker
           imagePullPolicy: Always
           image: mitragaurav10/api:1.0
-          command: ['sh', '-c', 'python3 /code/test_worker.py || true; echo "Tests completed at $(date)"; sleep 3600']
+          command: ['sh', '-c', 'cd /code && python -m pytest test/test_worker.py -v || true; echo "Tests completed at $(date)"; sleep 3600']
           env:
            - name: LOG_LEVEL
              value: DEBUG
