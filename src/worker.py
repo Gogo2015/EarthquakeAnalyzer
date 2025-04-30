@@ -20,7 +20,7 @@ def bin_magnitude(mag):
     try:
         lower = int(mag)
         upper = lower + 0.9
-        return f"{lower}.0–{upper:.1f}"
+        return f"{lower}.0-{upper:.1f}"
     except:
         return "invalid"
 
