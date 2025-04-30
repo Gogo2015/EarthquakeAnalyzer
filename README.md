@@ -158,7 +158,21 @@ kubectl apply -f kubernetes/prod/
 The application will be available at the ingress URL defined in the Kubernetes configuration. To check the URL:
 
 ```
-kubectl get ingress -n <namespace>
+kubectl describe ingress flask-app-ingress
+```
+
+## Accessing the Application on Kubernetes
+
+When deployed to Kubernetes, the application is accessible through the following URL:
+
+```
+http://mitragaurav10.coe332.tacc.cloud/
+```
+
+You can access all API endpoints by appending the route paths to this URL. For example:
+
+```
+curl http://mitragaurav10.coe332.tacc.cloud/help
 ```
 
 ## Logging Configuration
